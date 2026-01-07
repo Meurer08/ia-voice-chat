@@ -4,24 +4,18 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useEffect } from 'react';
 
 type Props = {
-  onAudioRecordered: (audio: Blob) => void;
+  onStopAudioRecording: (audio: Blob) => void;
 };
 
-export function AudioRecorder({ onAudioRecordered }: Props) {
+export function AudioRecorder({ onStopAudioRecording }: Props) {
   const {
     startRecording,
     stopRecording,
     isRecording,
-    audioBlob,
+    audioBlobRef,
     error,
   } = useAudioRecorder();
 
-  useEffect(() => {
-    if (audioBlob) {
-      onAudioRecordered(audioBlob);
-      console.log(audioBlob)
-    }
-  }, [audioBlob])
 
   return (
     <div>
@@ -30,7 +24,7 @@ export function AudioRecorder({ onAudioRecordered }: Props) {
       {!isRecording ? (
         <button className={styles.recordButton} onClick={startRecording}>Gravar</button>
       ) : (
-        <button className={styles.stopButton} onClick={stopRecording}>Parar</button>
+        <button className={styles.stopButton} onClick={() => stopRecording(onStopAudioRecording)}>Parar</button>
       )}
     </div>
   );

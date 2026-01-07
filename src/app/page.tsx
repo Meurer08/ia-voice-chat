@@ -9,10 +9,9 @@ import { Message } from '@/components/ChatMessage/ChatMessage';
 import { TypingIndicator } from '@/components/TypingIndicator/TypingIndicator';
 
 export default function Home() {
-  const [blobAudio, setBlobAudio] = useState<Blob | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const [idMessages, setIdMessages ] = useState<number>(1)
+  const [idMessages, setIdMessages] = useState<number>(1)
 
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -27,40 +26,6 @@ export default function Home() {
     });
   }, [messages, isTranscribing, isGenerating]);
 
-  useEffect(() => {
-    if (!blobAudio) return;
-
-    async function transcribe(blob: Blob) {
-      try {
-
-        setIsTranscribing(true);
-
-        const data = await sendAudioToWhisper(blob);
-
-        const userMessage: ChatMessage = {
-          id: (idMessages+1).toString(),
-          role: 'user',
-          content: data.text,
-
-        };
-        setMessages(prev => [...prev, userMessage]);
-        setIsTranscribing(false);
-        setIsGenerating(true);
-        await generateResponseGPT(data.text, (idMessages+2));
-
-      } catch (error) {
-        console.error('Erro no processamento do áudio', error);
-      } finally {
-        setIsTranscribing(false);
-        setIsGenerating(false);
-        setBlobAudio(null);
-        setIdMessages(idMessages+2)
-      }
-    }
-
-    transcribe(blobAudio);
-  }, [blobAudio]);
-
   async function generateResponseGPT(textoAudio: string, id: number) {
     console.log("Dentro do Generator");
 
@@ -74,6 +39,35 @@ export default function Home() {
 
 
     setMessages(prev => [...prev, aiMessage]);
+  }
+
+  async function handleStopRecording(blob: Blob) {
+    if (!blob) return;
+
+    try {
+
+      setIsTranscribing(true);
+
+      const data = await sendAudioToWhisper(blob);
+
+      const userMessage: ChatMessage = {
+        id: (idMessages + 1).toString(),
+        role: 'user',
+        content: data.text,
+
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setIsTranscribing(false);
+      setIsGenerating(true);
+      await generateResponseGPT(data.text, (idMessages + 2));
+
+    } catch (error) {
+      console.error('Erro no processamento do áudio', error);
+    } finally {
+      setIsTranscribing(false);
+      setIsGenerating(false);
+      setIdMessages(idMessages + 2)
+    }
   }
 
   function resset() {
@@ -109,7 +103,7 @@ export default function Home() {
 
         <footer className={styles.chatFooter}>
           <span className={styles.statusText}>Toque no botão para falar</span>
-          <AudioRecorder onAudioRecordered={(blob: Blob) => setBlobAudio(blob)} />
+          <AudioRecorder onStopAudioRecording={handleStopRecording} />
         </footer>
       </main>
     </div>

@@ -5,14 +5,14 @@ import { useRef, useState } from 'react';
 export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioBlobRef = useRef<Blob | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startRecording = async () => {
+    audioBlobRef.current = null
     setError(null);
-    setAudioBlob(null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -34,28 +34,30 @@ export function useAudioRecorder() {
     }
   };
 
-  const stopRecording = () => {
-    const mediaRecorder = mediaRecorderRef.current;
-    if (!mediaRecorder) return;
+const stopRecording = (onStop: (blob: Blob) => void) => {
+  const mediaRecorder = mediaRecorderRef.current;
+  if (!mediaRecorder) return;
 
-    mediaRecorder.stop();
-    setIsRecording(false);
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(audioChunksRef.current, {
+      type: 'audio/webm',
+    });
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(audioChunksRef.current, {
-        type: 'audio/webm',
-      });
+    audioBlobRef.current = blob;
+    onStop(blob);
 
-      setAudioBlob(blob);
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    };
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
   };
+
+  mediaRecorder.stop();
+  setIsRecording(false);
+};
 
   return {
     startRecording,
     stopRecording,
     isRecording,
-    audioBlob,
+    audioBlobRef,
     error,
   };
 }
