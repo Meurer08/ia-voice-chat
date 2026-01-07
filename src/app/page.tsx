@@ -1,12 +1,12 @@
 "use client";
-import { AudioRecorder } from '@/componentes/AudioRecorder/AudioRecorder';
+import { AudioRecorder } from '@/components/AudioRecorder/AudioRecorder';
 import styles from './page.module.css';
 import { useEffect, useRef, useState } from 'react';
 import { sendAudioToWhisper } from '@/services/transcript';
 import { sendTextToChatApi } from '@/services/generate';
 import { ChatMessage } from '@/types/chat';
-import { Message } from '@/componentes/ChatMessage/ChatMessage';
-import { TypingIndicator } from '@/componentes/TypingIndicator/TypingIndicator';
+import { Message } from '@/components/ChatMessage/ChatMessage';
+import { TypingIndicator } from '@/components/TypingIndicator/TypingIndicator';
 
 export default function Home() {
   const [blobAudio, setBlobAudio] = useState<Blob | null>(null);
@@ -37,21 +37,14 @@ export default function Home() {
 
         const data = await sendAudioToWhisper(blob);
 
-
-
         const userMessage: ChatMessage = {
           id: (idMessages+1).toString(),
           role: 'user',
           content: data.text,
 
         };
-
-
         setMessages(prev => [...prev, userMessage]);
-
         setIsTranscribing(false);
-
-
         setIsGenerating(true);
         await generateResponseGPT(data.text, (idMessages+2));
 
